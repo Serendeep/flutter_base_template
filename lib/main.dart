@@ -47,6 +47,8 @@ class KlackrMobileApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _notificationService.initialize();
+    _notificationService.subscribeToTopic('all');
     List<AppTheme> appTheme = appThemes
         .map<AppTheme>((localTheme) => localTheme.toAppTheme())
         .toList();
@@ -57,9 +59,9 @@ class KlackrMobileApp extends StatelessWidget {
           builder: (themeContext) {
             return MaterialApp.router(
               debugShowCheckedModeBanner: false,
-              title: 'DigiRasa',
+              title: 'Klackr',
               theme: ThemeProvider.themeOf(themeContext).data,
-              restorationScopeId: 'digirasa_app',
+              restorationScopeId: 'klackr_app',
               routerConfig: AppRouter().router,
             );
           },

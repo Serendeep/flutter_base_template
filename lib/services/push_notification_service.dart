@@ -86,10 +86,10 @@ class PushNotificationService {
   //   return token;
   // }
 
-  // Future<void> subscribeToTopic(String topic) async {
-  //   await _fcm.subscribeToTopic(topic);
-  //   _logger.d('Subscribed to topic: $topic');
-  // }
+  Future<void> subscribeToTopic(String topic) async {
+    // await _fcm.subscribeToTopic(topic);
+    _logger.d('Subscribed to topic: $topic');
+  }
 
   // Future<void> unsubscribeFromTopic(String topic) async {
   //   await _fcm.unsubscribeFromTopic(topic);
