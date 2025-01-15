@@ -70,18 +70,61 @@ The app supports three environments: development, staging, and production. Each 
 - Environment Banner (except production)
 - Configuration
 
-To run the app in different environments:
+## Scripts
+
+### Generating App Icons
+
+The project includes a script to generate app icons for different environments:
 
 ```bash
-# Development
-flutter run --flavor development -t lib/main_development.dart
+# Navigate to the scripts directory
+cd scripts
 
-# Staging
-flutter run --flavor staging -t lib/main_staging.dart
+# Make the script executable
+chmod +x generate_icons.sh
 
-# Production
-flutter run --flavor production -t lib/main_production.dart
+# Run the icon generation script
+./generate_icons.sh
 ```
+
+#### Custom Logo
+- Place your custom logo at `assets/logo.png`
+- If no logo is present, the script will download the Flutter logo
+- Icons will be generated with a flavor-specific banner
+
+### Running the App
+
+```bash
+chmod +x scripts/run.sh
+```
+
+#### Development Environment
+```bash
+./scripts/run.sh development 
+```
+
+#### Staging Environment
+```bash
+./scripts/run.sh staging 
+```
+
+#### Production Environment
+```bash
+./scripts/run.sh production 
+```
+
+### Troubleshooting
+
+- Ensure ImageMagick is installed: 
+  ```bash
+  # For Ubuntu/Debian
+  sudo apt-get install imagemagick
+  
+  # For macOS
+  brew install imagemagick
+  ```
+- Check Flutter and Dart SDK versions
+- Verify script permissions with `chmod +x scripts/*.sh`
 
 ## Environment Configuration
 

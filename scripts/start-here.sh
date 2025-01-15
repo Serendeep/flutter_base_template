@@ -122,6 +122,32 @@ find web -type f -name "*.html" -exec sed -i "s/$OLD_PROJECT_NAME/$NEW_PROJECT_N
 find web -type f -name "manifest.json" -exec sed -i "s/$OLD_PROJECT_NAME/$NEW_PROJECT_NAME/g" {} +
 print_success "Updated web configuration"
 
+# Function to generate app icons
+generate_app_icons() {
+    print_status "Generating app icons for all environments"
+    
+    # Check if ImageMagick is installed
+    if ! command -v magick &> /dev/null; then
+        print_error "ImageMagick is not installed. Please install it first."
+        print_error "On Ubuntu/Debian: sudo apt-get install imagemagick"
+        print_error "On macOS: brew install imagemagick"
+        return 1
+    fi
+    
+    # Make the generate_icons.sh script executable
+    chmod +x generate_icons.sh
+    
+    # Run the icon generation script
+    ./generate_icons.sh
+    
+    if [ $? -eq 0 ]; then
+        print_success "App icons generated successfully for all environments"
+    else
+        print_error "Failed to generate app icons"
+        return 1
+    fi
+}
+
 # Clean up
 print_status "Cleaning up project..."
 
@@ -148,6 +174,9 @@ flutter pub get
 
 # Make run script executable
 chmod +x run.sh
+
+# Add icon generation to the main workflow
+generate_app_icons
 
 print_success "Project generation complete!"
 echo ""
