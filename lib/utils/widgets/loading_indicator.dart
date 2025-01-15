@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:klackr_mobile/utils/theme/theme.dart';
+import 'package:flutter_base_template/utils/theme/theme.dart';
 
 class LoadingDialogIndicator extends StatelessWidget {
   const LoadingDialogIndicator({

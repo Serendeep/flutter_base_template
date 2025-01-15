@@ -32,7 +32,7 @@ END
 
 2 TEXTINCLUDE
 BEGIN
-    "#include ""winres.h""\r\n"
+    "#include "flutterbase_template"winres.h"flutterbase_template"\r\n"
     "\0"
 END
 
@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "klackr" "\0"
-            VALUE "FileDescription", "klackr_mobile" "\0"
+            VALUE "FileDescription", "flutter_base_template" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "klackr_mobile" "\0"
+            VALUE "InternalName", "flutter_base_template" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 klackr. All rights reserved." "\0"
             VALUE "OriginalFilename", "klackr_mobile.exe" "\0"
-            VALUE "ProductName", "klackr_mobile" "\0"
+            VALUE "ProductName", "flutter_base_template" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

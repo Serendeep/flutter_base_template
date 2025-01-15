@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:klackr_mobile/utils/theme/theme.dart';
+import 'package:flutter_base_template/utils/theme/theme.dart';
 import 'package:theme_provider/theme_provider.dart';
 
 class DebouncedButton extends StatefulWidget {

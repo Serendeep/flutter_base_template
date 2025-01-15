@@ -1,129 +1,319 @@
-// import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:klackr_mobile/utils/bloc_dispatcher.dart';
+import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_base_template/utils/config/bloc_dispatcher.dart';
+import 'package:flutter_base_template/utils/config/app_config.dart';
 import 'package:logger/logger.dart';
-// import 'package:rxdart/rxdart.dart';
-
-// final _messageStreamController = BehaviorSubject<RemoteMessage>();
+import 'package:rxdart/rxdart.dart';
 
 class PushNotificationService {
-  // final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  final BlocDispatcher _blocDispatcher;
+  static PushNotificationService? _instance;
   final Logger _logger = Logger();
-  final Set<String> _processedMessages = {};
-  bool _listenersRegistered = false;
+  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+  final BehaviorSubject<String?> _tokenSubject = BehaviorSubject<String?>();
+  final BehaviorSubject<RemoteMessage> _messageSubject =
+      BehaviorSubject<RemoteMessage>();
+  final BlocDispatcher _blocDispatcher;
+  bool _isInitialized = false;
 
-  PushNotificationService(this._blocDispatcher) {
-    Logger().d('Initializing PushNotificationService');
+  // Streams
+  Stream<String?> get tokenStream => _tokenSubject.stream;
+  Stream<RemoteMessage> get messageStream => _messageSubject.stream;
+
+  // Constructor
+  PushNotificationService._({required BlocDispatcher blocDispatcher})
+      : _blocDispatcher = blocDispatcher {
+    if (!AppConfig.enablePushNotifications) {
+      _logger.i('Push notifications are disabled in this environment');
+      return;
+    }
+  }
+
+  static PushNotificationService initialize(
+      {required BlocDispatcher blocDispatcher}) {
+    _instance ??= PushNotificationService._(blocDispatcher: blocDispatcher);
+    return _instance!;
+  }
+
+  static PushNotificationService get instance {
+    if (_instance == null) {
+      throw StateError('PushNotificationService must be initialized first');
+    }
+    return _instance!;
+  }
+
+  Future<void> init() async {
+    if (!AppConfig.enablePushNotifications) {
+      _logger.i('Push notifications are disabled. Skipping initialization.');
+      return;
+    }
+
+    if (_isInitialized) {
+      _logger.i('Push notification service already initialized');
+      return;
+    }
+
     try {
-      // FirebaseMessaging.onBackgroundMessage(backgroundHandler);
+      // Initialize Firebase
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+        _logger.i('Firebase initialized successfully');
+      }
+
+      // Request permission and initialize
+      await Future.wait([
+        _requestPermission(),
+        _initializeLocalNotifications(),
+      ]);
+
+      // Configure FCM
+      await _configureFCM();
+
+      // Get initial token
+      await _updateToken();
+
+      _isInitialized = true;
+      _logger.i('Push Notification Service initialized successfully');
+    } catch (e, stackTrace) {
+      _logger.e('Failed to initialize Push Notification Service');
+      _logger.e(e);
+      _logger.e(stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> _requestPermission() async {
+    try {
+      final settings = await _fcm.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+
+      _logger
+          .i('Notification permission status: ${settings.authorizationStatus}');
     } catch (e) {
-      Logger().e('Error registering background message handler: $e');
+      _logger.e('Failed to request notification permission');
+      _logger.e(e);
+      rethrow;
     }
   }
 
-  Future<void> initialize() async {
-    if (!_listenersRegistered) {
-      _listenersRegistered = true;
+  Future<void> _initializeLocalNotifications() async {
+    try {
+      const initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const initializationSettingsIOS = DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      );
+      const initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS,
+      );
 
-      // _fcm.subscribeToTopic('all');
-      // _fcm.subscribeToTopic('dev');
-      // NotificationSettings settings = await _fcm.requestPermission(
-      //   alert: true,
-      //   announcement: false,
-      //   badge: true,
-      //   carPlay: false,
-      //   criticalAlert: false,
-      //   provisional: false,
-      //   sound: true,
-      // );
+      await _localNotifications.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: _onLocalNotificationTapped,
+      );
 
-      // if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      //     _handleMessage(message);
-      //   });
-
-      //   backgroundOpenApp();
-
-      //   FirebaseMessaging.onMessageOpenedApp
-      //       .listen((RemoteMessage message) async {
-      //     _handleMessage(message);
-      //   });
-
-      // Get the token
-      // await getToken();
-      // }
+      _logger.i('Local notifications initialized successfully');
+    } catch (e) {
+      _logger.e('Failed to initialize local notifications');
+      _logger.e(e);
+      rethrow;
     }
   }
 
-  // void _handleMessage(RemoteMessage message) {
-  //   if (_processedMessages.contains(message.messageId)) {
-  //     _logger.d('Message ${message.messageId} already processed.');
-  //     return;
-  //   }
+  Future<void> _configureFCM() async {
+    try {
+      // Handle background messages
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
 
-  //   _logger.d('Got a message whilst in the foreground!');
-  //   _logger.d('Message data: ${message.data}');
+      // Handle foreground messages
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
-  //   // Dispatching to appropriate bloc
-  //   _blocDispatcher.dispatchBlocEvent(message.data);
+      // Handle notification taps
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
 
-  //   if (message.notification != null) {
-  //     _logger.d(
-  //         'Message also contained a notification: ${message.notification?.title}');
-  //     _logger.d(
-  //         'Message also contained a notification with: ${message.notification?.body}');
-  //     _messageStreamController.sink.add(message);
-  //   }
-  //   _processedMessages.add(message.messageId!);
-  //   Future.delayed(const Duration(milliseconds: 500), () {
-  //     _processedMessages.clear();
-  //   });
-  // }
+      // Check for initial message
+      final initialMessage = await _fcm.getInitialMessage();
+      if (initialMessage != null) {
+        _handleNotificationTap(initialMessage);
+      }
 
-  // Future<String?> getToken() async {
-  //   String? token = await _fcm.getToken();
-  //   _logger.d('Token: $token');
-  //   return token;
-  // }
+      _logger.i('FCM configured successfully');
+    } catch (e) {
+      _logger.e('Failed to configure FCM');
+      _logger.e(e);
+      rethrow;
+    }
+  }
+
+  Future<void> _updateToken() async {
+    try {
+      final token = await _fcm.getToken();
+      _tokenSubject.add(token);
+      _logger.i('FCM Token updated successfully');
+
+      // Listen for token refresh
+      _fcm.onTokenRefresh.listen(
+        (token) {
+          _tokenSubject.add(token);
+          _logger.i('FCM Token refreshed');
+        },
+        onError: (e) {
+          _logger.e('Error refreshing FCM token');
+          _logger.e(e);
+        },
+      );
+    } catch (e) {
+      _logger.e('Failed to get FCM token');
+      _logger.e(e);
+      rethrow;
+    }
+  }
+
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
+    try {
+      _logger.i('Received foreground message: ${message.messageId}');
+      _messageSubject.add(message);
+
+      await _showLocalNotification(message);
+      _blocDispatcher.handleNotification(message.data);
+    } catch (e) {
+      _logger.e('Error handling foreground message');
+      _logger.e(e);
+    }
+  }
+
+  Future<void> _showLocalNotification(RemoteMessage message) async {
+    try {
+      final notification = message.notification;
+      final android = message.notification?.android;
+
+      if (notification != null) {
+        await _localNotifications.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              'default_channel',
+              'Default Channel',
+              channelDescription: 'Default notification channel',
+              importance: Importance.max,
+              priority: Priority.high,
+              icon: android?.smallIcon,
+            ),
+            iOS: const DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
+          ),
+          payload: message.data.toString(),
+        );
+        _logger.i('Local notification shown successfully');
+      }
+    } catch (e) {
+      _logger.e('Failed to show local notification');
+      _logger.e(e);
+    }
+  }
+
+  void _handleNotificationTap(RemoteMessage message) {
+    try {
+      _logger.i('Notification tapped: ${message.messageId}');
+      _messageSubject.add(message);
+      // Add your navigation logic here
+    } catch (e) {
+      _logger.e('Error handling notification tap');
+      _logger.e(e);
+    }
+  }
+
+  void _onLocalNotificationTapped(NotificationResponse response) {
+    try {
+      _logger.i('Local notification tapped: ${response.payload}');
+      // Add your local notification tap handling logic here
+    } catch (e) {
+      _logger.e('Error handling local notification tap');
+      _logger.e(e);
+    }
+  }
 
   Future<void> subscribeToTopic(String topic) async {
-    // await _fcm.subscribeToTopic(topic);
-    _logger.d('Subscribed to topic: $topic');
+    if (!_isInitialized) {
+      _logger.e('Cannot subscribe to topic: Service not initialized');
+      return;
+    }
+
+    try {
+      await _fcm.subscribeToTopic(topic);
+      _logger.i('Subscribed to topic: $topic');
+    } catch (e) {
+      _logger.e('Failed to subscribe to topic: $topic');
+      _logger.e(e);
+      rethrow;
+    }
   }
 
-  // Future<void> unsubscribeFromTopic(String topic) async {
-  //   await _fcm.unsubscribeFromTopic(topic);
-  //   _logger.d('Unsubscribed from topic: $topic');
-  // }
+  Future<void> unsubscribeFromTopic(String topic) async {
+    if (!_isInitialized) {
+      _logger.e('Cannot unsubscribe from topic: Service not initialized');
+      return;
+    }
 
-  // Stream<RemoteMessage> get messageStream => _messageStreamController.stream
-  //     .distinct((prev, next) => prev.messageId == next.messageId);
+    try {
+      await _fcm.unsubscribeFromTopic(topic);
+      _logger.i('Unsubscribed from topic: $topic');
+    } catch (e) {
+      _logger.e('Failed to unsubscribe from topic: $topic');
+      _logger.e(e);
+      rethrow;
+    }
+  }
 
-  // void dispose() {
-  //   _messageStreamController.close();
-  // }
+  Future<void> dispose() async {
+    if (!_isInitialized) return;
 
-  // void backgroundOpenApp() async {
-  //   _fcm.getInitialMessage().then((message) {
-  //     if (message != null && !_processedMessages.contains(message.messageId)) {
-  //       _handleMessage(message);
-  //       if (message.notification != null) {
-  //         _messageStreamController.sink.add(message);
-  //       }
-  //       _processedMessages.add(message.messageId!);
-  //     }
-  //   });
-  // }
+    try {
+      await Future.wait([
+        _tokenSubject.close(),
+        _messageSubject.close(),
+      ]);
+      _instance = null;
+      _isInitialized = false;
+      _logger.i('Push notification service disposed successfully');
+    } catch (e) {
+      _logger.e('Error disposing push notification service');
+      _logger.e(e);
+    }
+  }
+}
 
-  // static Future<void> backgroundHandler(RemoteMessage message) async {
-  //   Logger().d('Handling a background message ${message.messageId}');
-  //   if (message.data.isNotEmpty) {
-  //     Logger().d('Message also contained data: ${message.data}');
-  //   }
-  //   if (message.notification != null) {
-  //     Logger().d(
-  //         'Message also contained a notification: ${message.notification?.title}');
-  //     _messageStreamController.sink.add(message);
-  //   }
-  // }
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    // Initialize Firebase for background handler
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+
+    final logger = Logger();
+    logger.i('Handling background message: ${message.messageId}');
+    // Add your background message handling logic here
+  } catch (e, stackTrace) {
+    final logger = Logger();
+    logger.e('Error in background message handler');
+    logger.e(e);
+    logger.e(stackTrace);
+  }
 }

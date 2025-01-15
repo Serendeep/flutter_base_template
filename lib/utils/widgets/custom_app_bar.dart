@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:klackr_mobile/utils/widgets/back_button.dart';
+import 'package:flutter_base_template/utils/widgets/back_button.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar(

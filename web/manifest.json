@@ -1,6 +1,6 @@
 {
-    "name": "klackr_mobile",
-    "short_name": "klackr_mobile",
+    "name": "flutter_base_template",
+    "short_name": "flutter_base_template",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

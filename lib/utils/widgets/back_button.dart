@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:klackr_mobile/utils/theme/theme.dart';
+import 'package:flutter_base_template/utils/theme/theme.dart';
 
 class CustomBackButton extends StatelessWidget {
   const CustomBackButton({this.icon, this.onTap, super.key});

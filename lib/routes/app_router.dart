@@ -1,4 +1,4 @@
-import 'package:klackr_mobile/modules/home/views/home_page.dart';
+import 'package:flutter_base_template/modules/home/views/home_page.dart';
 
 import 'app_routes.dart';
 import 'package:flutter/material.dart';
