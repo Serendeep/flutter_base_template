@@ -78,7 +78,7 @@ class _DebouncedButtonState extends State<DebouncedButton> {
                   RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0), side: BorderSide(color: ThemeColor.get(context).textfieldBorderColor))),
           backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
           foregroundColor: WidgetStateProperty.all<Color>(Colors.white))
-      : ButtonStyle(textStyle: WidgetStateProperty.all<TextStyle>(ThemeProvider.themeOf(context).data.textTheme.labelLarge!.copyWith(color: ThemeColor.get(context).background, fontWeight: FontWeight.bold)), shape: MaterialStateProperty.all<RoundedRectangleBorder>(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))), backgroundColor: MaterialStateProperty.all<Color>(ThemeProvider.themeOf(context).data.colorScheme.primary));
+      : ButtonStyle(textStyle: WidgetStateProperty.all<TextStyle>(ThemeProvider.themeOf(context).data.textTheme.labelLarge!.copyWith(color: ThemeColor.get(context).background, fontWeight: FontWeight.bold)), shape: WidgetStateProperty.all<RoundedRectangleBorder>(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))), backgroundColor: WidgetStateProperty.all<Color>(ThemeProvider.themeOf(context).data.colorScheme.primary));
 
   void _onButtonPressed() {
     _isEnabled.value = false;

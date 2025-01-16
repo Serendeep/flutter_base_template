@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_base_template/utils/config/flavor_config.dart';
+import 'package:flutter_base_template/utils/constants.dart';
 
 class FlavorBanner extends StatelessWidget {
   final Widget child;
 
   const FlavorBanner({
-    Key? key,
+    super.key,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +18,7 @@ class FlavorBanner extends StatelessWidget {
 
     return Banner(
       location: BannerLocation.topEnd,
-      message: FlavorConfig.instance.flavor.name,
+      message: FlavorConfig.instance.flavor.name.toTitleCase,
       color: _getBannerColor(),
       child: child,
     );

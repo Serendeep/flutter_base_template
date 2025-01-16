@@ -41,22 +41,25 @@ class MyApp extends StatelessWidget {
         .map<AppTheme>((localTheme) => localTheme.toAppTheme())
         .toList();
 
-    return ThemeProvider(
-      saveThemesOnChange: true,
-      loadThemeOnInit: true,
-      themes: appTheme,
-      child: ThemeConsumer(
-        child: Builder(
-          builder: (themeContext) => MultiBlocProvider(
-            providers: [
-              BlocProvider(create: (context) => HomeBloc()),
-            ],
-            child: FlavorBanner(
-              child: MaterialApp.router(
-                title: AppConfig.appTitle,
-                theme: ThemeProvider.themeOf(themeContext).data,
-                routerConfig: AppRouter().router,
-                debugShowCheckedModeBanner: !AppConfig.isProduction,
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: ThemeProvider(
+        saveThemesOnChange: true,
+        loadThemeOnInit: true,
+        themes: appTheme,
+        child: ThemeConsumer(
+          child: Builder(
+            builder: (themeContext) => MultiBlocProvider(
+              providers: [
+                BlocProvider(create: (context) => HomeBloc()),
+              ],
+              child: FlavorBanner(
+                child: MaterialApp.router(
+                  title: AppConfig.appTitle,
+                  theme: ThemeProvider.themeOf(themeContext).data,
+                  routerConfig: AppRouter().router,
+                  debugShowCheckedModeBanner: !AppConfig.isProduction,
+                ),
               ),
             ),
           ),

@@ -9,7 +9,7 @@ abstract class BaseBloc<Event extends BaseEvent, State extends BaseState>
   final Logger logger = Logger();
   bool _isDisposed = false;
 
-  BaseBloc(State initialState) : super(initialState) {
+  BaseBloc(super.initialState) {
     on<Event>((event, emit) async {
       try {
         logger.d('Processing event: ${event.runtimeType}');
