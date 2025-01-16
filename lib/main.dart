@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
                 child: MaterialApp.router(
                   title: AppConfig.appTitle,
                   theme: ThemeProvider.themeOf(themeContext).data,
-                  routerConfig: AppRouter().router,
+                  routerConfig: AppRouter.router,
                   debugShowCheckedModeBanner: !AppConfig.isProduction,
                 ),
               ),
