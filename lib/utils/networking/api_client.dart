@@ -10,7 +10,7 @@ class ApiClient {
   final int maxRetries;
   final URLProvider _urlProvider;
 
-  ApiClient({this.maxRetries = 3})
+  ApiClient({this.maxRetries = AppConfig.maxRetries})
       : _dio = Dio(),
         _logger = Logger(),
         _urlProvider = URLProvider() {
@@ -18,12 +18,23 @@ class ApiClient {
   }
 
   void _initializeDio() {
-    _dio.options.baseUrl = _urlProvider.baseUrl;
+    _dio.options.baseUrl = getBaseUrl();
+    _dio.options.connectTimeout =
+        const Duration(milliseconds: AppConfig.connectTimeout);
+    _dio.options.receiveTimeout =
+        const Duration(milliseconds: AppConfig.receiveTimeout);
+    _dio.options.sendTimeout =
+        const Duration(milliseconds: AppConfig.sendTimeout);
+
     _dio.interceptors.addAll([
       _addHeadersInterceptor(),
       _logInterceptor(),
       _authInterceptor(),
     ]);
+  }
+
+  String getBaseUrl() {
+    return AppConfig.baseUrl + AppConfig.apiPath;
   }
 
   InterceptorsWrapper _addHeadersInterceptor() {
@@ -137,10 +148,13 @@ class ApiClient {
     int retries = requestOptions.extra['retries'] ?? 0;
     if (retries < maxRetries) {
       requestOptions.extra['retries'] = retries + 1;
-      _dio.fetch(requestOptions).then(
-            (response) => handler.resolve(response),
-            onError: (e) => handler.reject(e),
-          );
+      Future.delayed(
+        const Duration(milliseconds: AppConfig.retryDelay),
+        () => _dio.fetch(requestOptions).then(
+              (response) => handler.resolve(response),
+              onError: (e) => handler.reject(e),
+            ),
+      );
     } else {
       _logger.e("Max retries reached for ${requestOptions.uri}");
       handler.reject(

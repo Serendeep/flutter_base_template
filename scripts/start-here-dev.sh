@@ -27,7 +27,7 @@ if [ $# -eq 0 ]; then
 fi
 
 NEW_PROJECT_NAME=$1
-OLD_PROJECT_NAME="klackr_mobile"
+OLD_PROJECT_NAME="flutter_base_template"
 NEW_PACKAGE_NAME=$(echo $NEW_PROJECT_NAME | sed 's/_//')
 CURRENT_DIR=$(pwd)
 
@@ -120,7 +120,6 @@ rm -rf web
 flutter create . --platforms=web
 print_success "Updated web configuration"
 
-
 # Function to generate app icons
 generate_app_icons() {
     print_status "Generating app icons for all environments"
@@ -159,11 +158,13 @@ rm -f .flutter-plugins-dependencies
 rm -f README.md
 print_success "Removed generated directories and files"
 
-# Initialize fresh git repository
-print_status "Initializing fresh git repository..."
-rm -rf .git
-git init
-print_success "Initialized new git repository"
+# # Initialize fresh git repository
+# print_status "Initializing fresh git repository..."
+# rm -rf .git
+# git init
+# print_success "Initialized new git repository"
+
+print_status "Skipping git initialization"
 
 # Run flutter clean and pub get
 print_status "Running flutter clean..."
@@ -173,7 +174,7 @@ print_status "Getting dependencies..."
 flutter pub get
 
 # Make run script executable
-chmod +x run.sh
+chmod +x scripts/run.sh
 
 # Add icon generation to the main workflow
 generate_app_icons
@@ -184,6 +185,6 @@ echo "Next steps:"
 echo "1. cd into your project directory"
 echo "2. Review the README.md file for setup instructions"
 echo "3. Run the app with different flavors using:"
-echo "   ./run.sh development    # For development build"
-echo "   ./run.sh staging       # For staging build"
-echo "   ./run.sh production    # For production build"
+echo "   ./scripts/run.sh development    # For development build"
+echo "   ./scripts/run.sh staging       # For staging build"
+echo "   ./scripts/run.sh production    # For production build"
