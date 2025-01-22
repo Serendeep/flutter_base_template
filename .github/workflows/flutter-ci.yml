@@ -1,0 +1,36 @@
+name: Flutter CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      env_file:
+        description: 'Environment File'
+        required: false
+        default: '.env'
+        type: string
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.0'
+          channel: 'stable'
+      
+      - name: Prepare Environment
+        run: |
+          chmod +x ./scripts/setup-env.sh
+          ./scripts/setup-env.sh -e ${{ inputs.env_file }}
+        
+      - name: Install dependencies
+        run: flutter pub get
+        
+      - name: Analyze project source
+        run: flutter analyze
+        
+      - name: Run tests
+        run: flutter test

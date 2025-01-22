@@ -1,0 +1,45 @@
+name: Flutter CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Build Flavor'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      env_file:
+        description: 'Environment File'
+        required: false
+        default: '.env'
+        type: string
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.0'
+          channel: 'stable'
+      
+      - name: Prepare Environment
+        run: |
+          chmod +x ./scripts/setup-env.sh
+          ./scripts/setup-env.sh -f ${{ inputs.flavor }} -e ${{ inputs.env_file }}
+      
+      - name: Install dependencies
+        run: flutter pub get
+        
+      - name: Build APK
+        run: flutter build apk --flavor ${{ inputs.flavor }} --target lib/main_${{ inputs.flavor }}.dart
+        
+      - name: Build App Bundle
+        run: flutter build appbundle --flavor ${{ inputs.flavor }} --target lib/main_${{ inputs.flavor }}.dart

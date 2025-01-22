@@ -144,6 +144,39 @@ Each environment has its own distinctive app icon:
 - Staging: Orange icon with "Staging" label
 - Production: Blue icon
 
+## CI/CD and Environment Management
+
+### GitHub Actions Workflows
+
+The project includes two GitHub Actions workflows:
+
+1. **Continuous Integration (`flutter-ci.yml`):**
+   - Manually triggered workflow
+   - Validates code quality
+   - Runs tests
+   - Checks environment configuration
+
+2. **Continuous Deployment (`flutter-cd.yml`):**
+   - Manually triggered workflow
+   - Builds APK and App Bundle
+   - Supports multiple flavors (development, staging, production)
+   - Validates environment configuration
+
+### Environment Setup Script
+
+`scripts/setup-env.sh` provides robust environment configuration:
+- Validates environment file
+- Checks required environment variables
+- Supports different build flavors
+- Provides informative environment setup logging
+
+### Running Workflows
+
+You can manually trigger workflows from the GitHub Actions tab:
+- Select the desired flavor
+- Optionally specify a custom environment file
+- Run CI checks or build deployable artifacts
+
 ## Architecture
 
 ### BLoC Pattern
@@ -169,16 +202,7 @@ Each environment has its own distinctive app icon:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## TODO
 
-- [ ] Implement comprehensive test suite
-- [X] Set up flavors for different environments (development, staging, production)
-- [X] Implement Commit Hooks
-- [ ] Configure CI/CD pipeline for automatic apk building and publishing
-- [ ] Add more documentation and examples
-- [ ] Implement analytics integration
-- [ ] Add offline support
-- [ ] Implement automated testing workflows
 
 ## Git Hooks
 
@@ -383,6 +407,17 @@ The Git hooks will:
 - If a commit is rejected, carefully read the error message
 - Ensure your code passes all checks before committing
 - For formatting issues, run `dart format .` to automatically fix most formatting problems
+
+## TODO
+
+- [ ] Implement comprehensive test suite
+- [X] Set up flavors for different environments (development, staging, production)
+- [X] Implement Commit Hooks
+- [X] Configure CI/CD pipeline for automatic apk building and publishing
+- [ ] Add more documentation and examples
+- [ ] Implement analytics integration
+- [ ] Add offline support
+- [ ] Implement automated testing workflows
 
 ## Credits
 
