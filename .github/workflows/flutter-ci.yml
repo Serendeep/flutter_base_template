@@ -12,6 +12,10 @@ on:
           - development
           - staging
           - production
+      env_contents:
+        description: 'Paste entire .env file contents here'
+        required: false
+        type: string
 
 jobs:
   ci:
@@ -19,23 +23,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Upload Environment File
-        uses: actions/upload-artifact@v3
-        with:
-          name: env-file
-          path: .env.${{ inputs.flavor }}
-          retention-days: 1
+      - name: Create Environment File
+        run: |
+          if [ -n "${{ inputs.env_contents }}" ]; then
+            echo "${{ inputs.env_contents }}" > .env.${{ inputs.flavor }}
+          else
+            echo "# Default environment configuration" > .env.${{ inputs.flavor }}
+          fi
       
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.16.0'
           channel: 'stable'
-      
-      - name: Download Environment File
-        uses: actions/download-artifact@v3
-        with:
-          name: env-file
       
       - name: Prepare Environment
         run: |
