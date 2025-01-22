@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Pre-commit hook checks
+echo -e "${YELLOW}Running pre-commit checks...${NC}"
+
+# Check if flutter is available
+if ! command -v flutter &> /dev/null; then
+    echo -e "${RED}Flutter is not installed or not in PATH.${NC}"
+    exit 1
+fi
+
+# Maximum file size (5MB)
+MAX_FILE_SIZE=$((5 * 1024 * 1024))
+
+# Check for any uncommitted large files or binary files
+git diff --cached --name-only | while read -r file; do
+    # Skip if file doesn't exist (deleted)
+    [ -f "$file" ] || continue
+
+    # Check file size
+    file_size=$(stat -c %s "$file")
+    if [ "$file_size" -gt "$MAX_FILE_SIZE" ]; then
+        echo -e "${RED}Error: $file exceeds 5MB limit (current size: $file_size bytes).${NC}"
+        exit 1
+    fi
+
+    # Check for binary files
+    if file --mime-type "$file" | grep -q "application/octet-stream"; then
+        echo -e "${RED}Error: Binary file $file detected. Avoid committing binary files.${NC}"
+        exit 1
+    fi
+done
+
+# Run Flutter tests
+flutter test
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Flutter tests failed. Please fix the test failures.${NC}"
+    exit 1
+fi
+
+# Run Flutter analyze
+flutter analyze
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Flutter analyze failed. Please fix the issues.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}Pre-commit checks passed successfully!${NC}"
+exit 0

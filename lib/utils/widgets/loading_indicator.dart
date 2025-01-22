@@ -20,8 +20,7 @@ class LoadingDialogIndicator extends StatelessWidget {
         width: 40.0,
         decoration: const BoxDecoration(color: Colors.transparent),
         child: CircularProgressIndicator.adaptive(
-          backgroundColor:
-              ThemeColor.get(context).primaryAccent.withOpacity(0.3),
+          backgroundColor: ThemeColor.get(context).primaryAccent.withAlpha(77),
         ),
       ),
     );

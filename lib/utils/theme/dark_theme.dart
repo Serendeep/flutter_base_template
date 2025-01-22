@@ -20,12 +20,14 @@ ThemeData darkTheme(BaseColorStyles color) {
         fontSize: 45.0,
         fontWeight: FontWeight.w700,
         fontFamily: 'Gilroy',
-        color: color.primaryContent), // Large text, slightly smaller than displayLarge.
+        color: color
+            .primaryContent), // Large text, slightly smaller than displayLarge.
     displaySmall: TextStyle(
         fontSize: 36.0,
         fontWeight: FontWeight.w700,
         fontFamily: 'Gilroy',
-        color: color.primaryContent), // Smaller than displayMedium but larger than headlines.
+        color: color
+            .primaryContent), // Smaller than displayMedium but larger than headlines.
     headlineLarge: TextStyle(
         fontWeight: FontWeight.bold,
         fontSize: 32.0,
@@ -114,7 +116,7 @@ ThemeData darkTheme(BaseColorStyles color) {
       elevation: 4,
     ),
     dividerTheme: DividerThemeData(
-      color: color.primaryContent.withOpacity(0.12),
+      color: color.primaryContent.withAlpha(30),
     ),
   );
 }

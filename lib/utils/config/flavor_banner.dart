@@ -27,9 +27,9 @@ class FlavorBanner extends StatelessWidget {
   Color _getBannerColor() {
     switch (FlavorConfig.instance.flavor) {
       case Flavor.development:
-        return Colors.green.withOpacity(0.6);
+        return Colors.green.withValues(alpha: 153); // 0.6 * 255 = 153
       case Flavor.staging:
-        return Colors.orange.withOpacity(0.6);
+        return Colors.orange.withValues(alpha: 153); // 0.6 * 255 = 153
       case Flavor.production:
         return Colors.transparent;
     }

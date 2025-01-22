@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Logging function
+log_debug() {
+    echo -e "${YELLOW}[DEBUG]${NC} $1" >&2
+}
+
+# Gitmoji types and their corresponding emoji codes
+declare -A GITMOJI_TYPES=(
+    [":art:"]="Improve structure / format of the code"
+    [":zap:"]="Improve performance"
+    [":fire:"]="Remove code or files"
+    [":bug:"]="Fix a bug"
+    [":ambulance:"]="Critical hotfix"
+    [":sparkles:"]="Introduce new features"
+    [":memo:"]="Add or update documentation"
+    [":rocket:"]="Deploy stuff"
+    [":lipstick:"]="Add or update the UI and style files"
+    [":tada:"]="Begin a project"
+    [":white_check_mark:"]="Add, update, or pass tests"
+    [":lock:"]="Fix security or privacy issues"
+    [":closed_lock_with_key:"]="Add or update secrets"
+    [":bookmark:"]="Release / Version tags"
+    [":rotating_light:"]="Fix compiler / linter warnings"
+    [":construction:"]="Work in progress"
+    [":green_heart:"]="Fix CI Build"
+    [":arrow_down:"]="Downgrade dependencies"
+    [":arrow_up:"]="Upgrade dependencies"
+    [":pushpin:"]="Pin dependencies to specific versions"
+    [":construction_worker:"]="Add or update CI build system"
+    [":chart_with_upwards_trend:"]="Add or update analytics or track code"
+    [":recycle:"]="Refactor code"
+    [":heavy_plus_sign:"]="Add a dependency"
+    [":heavy_minus_sign:"]="Remove a dependency"
+    [":wrench:"]="Add or update configuration files"
+    [":hammer:"]="Add or update development scripts"
+    [":globe_with_meridians:"]="Internationalization and localization"
+    [":pencil2:"]="Fix typos"
+    [":poop:"]="Write bad code that needs to be improved"
+    [":rewind:"]="Revert changes"
+    [":twisted_rightwards_arrows:"]="Merge branches"
+    [":package:"]="Add or update compiled files or packages"
+    [":alien:"]="Update code due to external API changes"
+    [":truck:"]="Move or rename resources"
+    [":page_facing_up:"]="Add or update license"
+    [":boom:"]="Introduce breaking changes"
+    [":bento:"]="Add or update assets"
+    [":wheelchair:"]="Improve accessibility"
+    [":bulb:"]="Add or update comments in source code"
+    [":speech_balloon:"]="Add or update text and literals"
+    [":card_file_box:"]="Perform database related changes"
+    [":loud_sound:"]="Add or update logs"
+    [":mute:"]="Remove logs"
+    [":children_crossing:"]="Improve user experience / usability"
+    [":building_construction:"]="Make architectural changes"
+    [":iphone:"]="Work on responsive design"
+    [":clown_face:"]="Mock things"
+    [":see_no_evil:"]="Add or update a .gitignore file"
+    [":camera_flash:"]="Add or update snapshots"
+    [":alembic:"]="Perform experiments"
+    [":mag:"]="Improve SEO"
+    [":label:"]="Add or update types"
+    [":seedling:"]="Add or update seed files"
+    [":triangular_flag_on_post:"]="Add, update, or remove feature flags"
+    [":goal_net:"]="Catch errors"
+    [":dizzy:"]="Add or update animations and transitions"
+    [":wastebasket:"]="Deprecate code that needs to be cleaned up"
+    [":passport_control:"]="Work on authorization, roles and permissions"
+    [":adhesive_bandage:"]="Simple fix for a non-critical issue"
+    [":monocle_face:"]="Data exploration/inspection"
+    [":coffin:"]="Remove dead code"
+    [":test_tube:"]="Add a failing test"
+    [":necktie:"]="Add or update business logic"
+    [":stethoscope:"]="Add or update healthcheck"
+    [":bricks:"]="Infrastructure related changes"
+    [":technologist:"]="Improve developer experience"
+    [":thread:"]="Add or update code related to multithreading or concurrency"
+    [":safety_vest:"]="Add or update code related to validation"
+)
+
+# Commit message validation
+COMMIT_MSG_FILE="$1"
+# Get the first line of the commit message
+FIRST_LINE=$(head -n 1 "$COMMIT_MSG_FILE")
+
+# Log the full first line for debugging
+log_debug "Original First Line: '$FIRST_LINE'"
+
+# Prepare regex validation
+# This regex allows:
+# - Optional gitmoji at the start
+# - Optional scope
+# - Colon and description
+GITMOJI_REGEX="^(:[a-z_]+:)?\s*(\([a-z0-9\-]+\))?:\s*(.+)$"
+log_debug "Validation Regex: $GITMOJI_REGEX"
+
+# Check commit message format
+if ! [[ "$FIRST_LINE" =~ $GITMOJI_REGEX ]]; then
+    echo -e "${RED}Error: Invalid commit message format!${NC}"
+    echo -e "Commit message should follow Gitmoji Conventional Commits standard:"
+    echo -e "  [gitmoji] [optional scope]: <description>"
+    echo -e "\nValid Gitmojis:"
+    for emoji in "${!GITMOJI_TYPES[@]}"; do
+        echo -e "  $emoji - ${GITMOJI_TYPES[$emoji]}"
+    done
+    echo -e "\nExample: :sparkles:(auth): add user authentication mechanism${NC}"
+    
+    # Additional debugging information
+    log_debug "Regex Match Failed"
+    exit 1
+fi
+
+# Extract gitmoji and validate if present
+if [[ "$FIRST_LINE" =~ ^(:[a-z_]+:) ]]; then
+    GITMOJI="${BASH_REMATCH[1]}"
+    log_debug "Detected Gitmoji: $GITMOJI"
+    
+    # Check if the gitmoji is valid
+    if [[ -z "${GITMOJI_TYPES[$GITMOJI]}" ]]; then
+        echo -e "${RED}Error: Invalid Gitmoji!${NC}"
+        echo -e "The gitmoji '$GITMOJI' is not a recognized gitmoji."
+        echo -e "\nValid Gitmojis:"
+        for emoji in "${!GITMOJI_TYPES[@]}"; do
+            echo -e "  $emoji - ${GITMOJI_TYPES[$emoji]}"
+        done
+        exit 1
+    fi
+fi
+
+# Check commit message length (at least 3 characters after type)
+DESCRIPTION=$(echo "$FIRST_LINE" | sed -E 's/^(:[a-z_]+:)?\s*(\([a-z0-9\-]+\))?:\s*//')
+log_debug "Description: '$DESCRIPTION'"
+
+if [ ${#DESCRIPTION} -lt 3 ]; then
+    echo -e "${RED}Error: Commit message description is too short. Provide a meaningful description.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}Commit message validation passed!${NC}"
+exit 0

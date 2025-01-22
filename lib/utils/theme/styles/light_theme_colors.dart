@@ -65,8 +65,7 @@ class LightThemeColors implements BaseColorStyles {
   Color get selectedValuesTextColor =>
       const Color(0xFF000000); // Black for light theme.
   @override
-  Color get textfieldBorderColor =>
-      const Color(0xffB3142E).withOpacity(0.35); // Light grey for light theme.
+  Color get textfieldBorderColor => const Color(0xffB3142E).withAlpha(89);
   @override
   Color get labelTextColor =>
       const Color(0xff999999); // Label text color for light theme.
