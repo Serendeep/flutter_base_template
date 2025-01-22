@@ -97,7 +97,7 @@ log_debug "Original First Line: '$FIRST_LINE'"
 # - Optional gitmoji at the start
 # - Optional scope
 # - Colon and description
-GITMOJI_REGEX="^(:[a-z_]+:)?\s*(\([a-z0-9\-]+\))?:\s*(.+)$"
+GITMOJI_REGEX="^(:[a-z_]+:)?\s*(\([a-z0-9\-]+\))?:?\s*(.+)$"
 log_debug "Validation Regex: $GITMOJI_REGEX"
 
 # Check commit message format
@@ -134,7 +134,7 @@ if [[ "$FIRST_LINE" =~ ^(:[a-z_]+:) ]]; then
 fi
 
 # Check commit message length (at least 3 characters after type)
-DESCRIPTION=$(echo "$FIRST_LINE" | sed -E 's/^(:[a-z_]+:)?\s*(\([a-z0-9\-]+\))?:\s*//')
+DESCRIPTION=$(echo "$FIRST_LINE" | sed -E 's/^(:[a-z_]+:)?\s*(\([a-z0-9\-]+\))?:?\s*//')
 log_debug "Description: '$DESCRIPTION'"
 
 if [ ${#DESCRIPTION} -lt 3 ]; then

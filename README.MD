@@ -144,7 +144,7 @@ Each environment has its own distinctive app icon:
 - Staging: Orange icon with "Staging" label
 - Production: Blue icon
 
-## CI/CD and Environment Management
+## CI/CD and Environment Management (WIP)
 
 ### GitHub Actions Workflows
 
