@@ -51,15 +51,9 @@ class HomeLoaded extends HomeState {
 
 class HomeError extends HomeState {
   final String message;
-  final dynamic error;
-  final StackTrace? stackTrace;
 
-  const HomeError({
-    required this.message,
-    this.error,
-    this.stackTrace,
-  });
+  const HomeError({required this.message});
 
   @override
-  List<Object?> get props => [message, error, stackTrace];
+  List<Object?> get props => [message];
 }

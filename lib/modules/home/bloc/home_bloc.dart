@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_base_template/core/base_bloc.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 import 'package:logger/logger.dart';
 
 part 'home_event.dart';
@@ -22,17 +23,26 @@ class HomeBloc extends BaseBloc<HomeEvent, HomeState> {
       _logger.i('Initializing home screen');
       emit(const HomeLoading());
 
-      // Add your initialization logic here
-      await Future.delayed(const Duration(seconds: 1)); // Simulated delay
+      // Simulated data initialization
+      await Future.delayed(const Duration(seconds: 1));
 
-      emit(const HomeLoaded(
+      emit(HomeLoaded(
         title: 'Welcome to Flutter Base Template',
-        message: 'This is a sample home screen',
+        message: 'Your app is ready to go!',
+        lastRefreshed: DateTime.now(),
+        data: {
+          'users': [
+            {'name': 'John Doe', 'email': 'john.doe@example.com'},
+            {'name': 'Jane Smith', 'email': 'jane.smith@example.com'},
+          ],
+          'projects': [
+            {'name': 'Flutter Base Template', 'status': 'Active'},
+            {'name': 'Mobile App', 'status': 'In Progress'},
+          ],
+        },
       ));
-    } catch (e) {
-      _logger.e('Error initializing home screen');
-      _logger.e(e);
-      emit(const HomeError(message: 'Failed to initialize home screen'));
+    } catch (e, stackTrace) {
+      await handleError(e, stackTrace, emit);
     }
   }
 
@@ -42,19 +52,32 @@ class HomeBloc extends BaseBloc<HomeEvent, HomeState> {
   ) async {
     try {
       _logger.i('Loading home data');
-      emit(const HomeLoading());
+      emit(HomeLoading(isRefreshing: event.forceRefresh));
 
-      // Add your data loading logic here
-      await Future.delayed(const Duration(seconds: 1)); // Simulated delay
+      // Simulated data loading with optional force refresh
+      await Future.delayed(const Duration(seconds: 1));
 
-      emit(const HomeLoaded(
-        title: 'Data Loaded',
-        message: 'Successfully loaded home screen data',
+      emit(HomeLoaded(
+        title: 'Data Loaded Successfully',
+        message: event.forceRefresh
+            ? 'Data has been forcefully refreshed'
+            : 'Home data loaded from cache',
+        lastRefreshed: DateTime.now(),
+        data: {
+          'users': [
+            {'name': 'John Doe', 'email': 'john.doe@example.com'},
+            {'name': 'Jane Smith', 'email': 'jane.smith@example.com'},
+            {'name': 'New User', 'email': 'new.user@example.com'},
+          ],
+          'projects': [
+            {'name': 'Flutter Base Template', 'status': 'Active'},
+            {'name': 'Mobile App', 'status': 'In Progress'},
+            {'name': 'Web Dashboard', 'status': 'Planning'},
+          ],
+        },
       ));
-    } catch (e) {
-      _logger.e('Error loading home data');
-      _logger.e(e);
-      emit(const HomeError(message: 'Failed to load home data'));
+    } catch (e, stackTrace) {
+      await handleError(e, stackTrace, emit);
     }
   }
 
@@ -63,31 +86,66 @@ class HomeBloc extends BaseBloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      _logger.i('Refreshing home data');
       final currentState = state;
+      _logger.i('Refreshing home data');
 
       if (currentState is HomeLoaded) {
         emit(const HomeLoading(isRefreshing: true));
 
-        // Add your refresh logic here
-        await Future.delayed(const Duration(seconds: 1)); // Simulated delay
+        // Simulated data refresh
+        await Future.delayed(const Duration(seconds: 1));
 
         emit(HomeLoaded(
           title: 'Data Refreshed',
-          message: 'Successfully refreshed home screen data',
+          message: 'Latest data fetched successfully',
           lastRefreshed: DateTime.now(),
+          data: {
+            'users': [
+              {'name': 'John Doe', 'email': 'john.doe@example.com'},
+              {'name': 'Jane Smith', 'email': 'jane.smith@example.com'},
+              {'name': 'New User', 'email': 'new.user@example.com'},
+              {'name': 'Admin User', 'email': 'admin@example.com'},
+            ],
+            'projects': [
+              {'name': 'Flutter Base Template', 'status': 'Active'},
+              {'name': 'Mobile App', 'status': 'Completed'},
+              {'name': 'Web Dashboard', 'status': 'In Progress'},
+            ],
+          },
         ));
       }
-    } catch (e) {
-      _logger.e('Error refreshing home data');
-      _logger.e(e);
-      emit(const HomeError(message: 'Failed to refresh home data'));
+    } catch (e, stackTrace) {
+      await handleError(e, stackTrace, emit);
     }
   }
 
   @override
-  Future<void> handleEvent(HomeEvent event, Emitter<HomeState> emit) {
-    // TODO: implement handleEvent
-    throw UnimplementedError();
+  Future<void> handleEvent(HomeEvent event, Emitter<HomeState> emit) async {
+    // Default event handling (can be overridden if needed)
+    if (event is InitializeHomeEvent) {
+      await _onInitialize(event, emit);
+    } else if (event is LoadHomeDataEvent) {
+      await _onLoadData(event, emit);
+    } else if (event is RefreshHomeDataEvent) {
+      await _onRefresh(event, emit);
+    } else {
+      emit(const HomeError(message: 'Unknown event type'));
+    }
+  }
+
+  @override
+  Future<void> handleError(
+    dynamic error,
+    StackTrace stackTrace,
+    Emitter<HomeState> emit,
+  ) async {
+    // Custom error handling for HomeBloc
+    AppError.create(
+      message: 'Error in HomeBloc',
+      type: ErrorType.unknown,
+      originalError: error,
+      stackTrace: stackTrace,
+    );
+    emit(HomeError(message: error.toString()));
   }
 }
