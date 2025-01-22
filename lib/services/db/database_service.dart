@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
@@ -38,9 +39,13 @@ class DatabaseService {
         onUpgrade: _onUpgrade,
         onDowngrade: onDatabaseDowngradeDelete,
       );
-    } catch (e) {
-      _logger.e('Error initializing database', error: e);
-      rethrow;
+    } catch (e, stackTrace) {
+      throw AppError.create(
+        message: 'Failed to initialize database',
+        type: ErrorType.database,
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -64,9 +69,13 @@ class DatabaseService {
 
         _logger.i('Database tables created successfully');
       });
-    } catch (e) {
-      _logger.e('Error creating database tables', error: e);
-      rethrow;
+    } catch (e, stackTrace) {
+      throw AppError.create(
+        message: 'Failed to create database tables',
+        type: ErrorType.database,
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -79,9 +88,13 @@ class DatabaseService {
         }
       });
       _logger.i('Database upgraded from $oldVersion to $newVersion');
-    } catch (e) {
-      _logger.e('Error upgrading database', error: e);
-      rethrow;
+    } catch (e, stackTrace) {
+      throw AppError.create(
+        message: 'Failed to upgrade database from $oldVersion to $newVersion',
+        type: ErrorType.database,
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -92,14 +105,30 @@ class DatabaseService {
     while (attempts < maxRetries) {
       try {
         return await operation();
-      } catch (e) {
+      } catch (e, stackTrace) {
         attempts++;
-        if (attempts == maxRetries) rethrow;
+        if (attempts == maxRetries) {
+          throw AppError.create(
+            message: 'Database operation failed after $maxRetries attempts',
+            type: ErrorType.database,
+            originalError: e,
+            stackTrace: stackTrace,
+          );
+        }
         await Future.delayed(Duration(milliseconds: 200 * attempts));
-        _logger.w('Retrying database operation, attempt $attempts');
+        AppError.create(
+          message: 'Retrying database operation, attempt $attempts',
+          type: ErrorType.database,
+          originalError: e,
+          stackTrace: stackTrace,
+          shouldLog: false, // Suppress logging for retry attempts
+        );
       }
     }
-    throw Exception('Database operation failed after $maxRetries attempts');
+    throw AppError.create(
+      message: 'Unexpected error in database retry mechanism',
+      type: ErrorType.database,
+    );
   }
 
   // Batch operations

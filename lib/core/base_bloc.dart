@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 part 'base_bloc_event.dart';
 part 'base_bloc_state.dart';
 
@@ -15,9 +16,10 @@ abstract class BaseBloc<Event extends BaseEvent, State extends BaseState>
         logger.d('Processing event: ${event.runtimeType}');
         await handleEvent(event, emit);
       } catch (error, stackTrace) {
-        logger.e(
-          'Error processing event: ${event.runtimeType}',
-          error: error,
+        AppError.create(
+          message: 'Error processing event: ${event.runtimeType}',
+          type: ErrorType.unknown,
+          originalError: error,
           stackTrace: stackTrace,
         );
         await handleError(error, stackTrace, emit);
@@ -35,7 +37,12 @@ abstract class BaseBloc<Event extends BaseEvent, State extends BaseState>
     Emitter<State> emit,
   ) async {
     // Default error handling
-    logger.e('Error in bloc', error: error, stackTrace: stackTrace);
+    AppError.create(
+      message: 'Error in bloc',
+      type: ErrorType.unknown,
+      originalError: error,
+      stackTrace: stackTrace,
+    );
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'package:flutter_base_template/core/error/app_error.dart';
 import 'package:flutter_base_template/services/db/database_service.dart';
 import 'package:flutter_base_template/utils/networking/api_client.dart';
 import 'package:logger/logger.dart';
@@ -24,9 +25,10 @@ abstract class BaseRepository {
     try {
       return await apiCall();
     } catch (error, stackTrace) {
-      _logger.e(
-        'API Error in ${runtimeType.toString()}',
-        error: error,
+      AppError.create(
+        message: 'API Error in ${runtimeType.toString()}',
+        type: ErrorType.network,
+        originalError: error,
         stackTrace: stackTrace,
       );
       rethrow;
@@ -45,15 +47,18 @@ abstract class BaseRepository {
         return await dbOperation();
       } catch (error, stackTrace) {
         attempts++;
-        _logger.w(
-          'Database operation failed in ${runtimeType.toString()}, attempt $attempts of $maxRetries',
-          error: error,
+        AppError.create(
+          message:
+              'Database operation failed in ${runtimeType.toString()}, attempt $attempts of $maxRetries',
+          type: ErrorType.database,
+          originalError: error,
           stackTrace: stackTrace,
         );
         if (attempts == maxRetries) {
-          _logger.e(
-            'Database operation failed after $maxRetries attempts',
-            error: error,
+          AppError.create(
+            message: 'Database operation failed after $maxRetries attempts',
+            type: ErrorType.database,
+            originalError: error,
             stackTrace: stackTrace,
           );
           rethrow;
@@ -82,9 +87,10 @@ abstract class BaseRepository {
       try {
         return await fallbackOperation();
       } catch (fallbackError, fallbackStackTrace) {
-        _logger.e(
-          'Fallback operation failed in ${runtimeType.toString()}',
-          error: fallbackError,
+        AppError.create(
+          message: 'Fallback operation failed in ${runtimeType.toString()}',
+          type: ErrorType.database,
+          originalError: fallbackError,
           stackTrace: fallbackStackTrace,
         );
         rethrow;
@@ -111,17 +117,19 @@ abstract class BaseRepository {
         try {
           await onConflict();
         } catch (conflictError, conflictStackTrace) {
-          _logger.e(
-            'Conflict resolution failed in ${runtimeType.toString()}',
-            error: conflictError,
+          AppError.create(
+            message: 'Conflict resolution failed in ${runtimeType.toString()}',
+            type: ErrorType.database,
+            originalError: conflictError,
             stackTrace: conflictStackTrace,
           );
           rethrow;
         }
       } else {
-        _logger.e(
-          'Sync operation failed in ${runtimeType.toString()}',
-          error: error,
+        AppError.create(
+          message: 'Sync operation failed in ${runtimeType.toString()}',
+          type: ErrorType.database,
+          originalError: error,
           stackTrace: stackTrace,
         );
         rethrow;
@@ -134,9 +142,10 @@ abstract class BaseRepository {
     try {
       await _databaseService.close();
     } catch (error, stackTrace) {
-      _logger.e(
-        'Error disposing repository resources',
-        error: error,
+      AppError.create(
+        message: 'Error disposing repository resources',
+        type: ErrorType.database,
+        originalError: error,
         stackTrace: stackTrace,
       );
     }

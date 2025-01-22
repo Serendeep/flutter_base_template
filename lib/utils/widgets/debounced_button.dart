@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_base_template/utils/theme/theme.dart';
-import 'package:logger/logger.dart';
 import 'package:theme_provider/theme_provider.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 
 class DebouncedButton extends StatefulWidget {
   final Widget textWidget;
@@ -49,8 +49,13 @@ class _DebouncedButtonState extends State<DebouncedButton> {
 
     try {
       await widget.onPressed();
-    } catch (e) {
-      Logger().e('DebouncedButton error: $e');
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'DebouncedButton error',
+        type: ErrorType.unknown,
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     } finally {
       _debounceTimer = Timer(widget.duration, () {
         if (mounted) {

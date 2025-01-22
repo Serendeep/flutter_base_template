@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_base_template/utils/config/bloc_dispatcher.dart';
 import 'package:logger/logger.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 
 class PushNotificationService {
   static PushNotificationService? _instance;
@@ -78,9 +79,12 @@ class PushNotificationService {
       _isInitialized = true;
       _logger.i('Push Notification Service initialized successfully');
     } catch (e, stackTrace) {
-      _logger.e('Failed to initialize Push Notification Service');
-      _logger.e(e);
-      _logger.e(stackTrace);
+      AppError.create(
+        message: 'Failed to initialize Push Notification Service',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
       rethrow;
     }
   }
@@ -96,9 +100,13 @@ class PushNotificationService {
 
       _logger
           .i('Notification permission status: ${settings.authorizationStatus}');
-    } catch (e) {
-      _logger.e('Failed to request notification permission');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Failed to request notification permission',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
       rethrow;
     }
   }
@@ -123,9 +131,13 @@ class PushNotificationService {
       );
 
       _logger.i('Local notifications initialized successfully');
-    } catch (e) {
-      _logger.e('Failed to initialize local notifications');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Failed to initialize local notifications',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
       rethrow;
     }
   }
@@ -149,9 +161,13 @@ class PushNotificationService {
       }
 
       _logger.i('FCM configured successfully');
-    } catch (e) {
-      _logger.e('Failed to configure FCM');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Failed to configure FCM',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
       rethrow;
     }
   }
@@ -168,14 +184,22 @@ class PushNotificationService {
           _tokenSubject.add(token);
           _logger.i('FCM Token refreshed');
         },
-        onError: (e) {
-          _logger.e('Error refreshing FCM token');
-          _logger.e(e);
+        onError: (e, stackTrace) {
+          AppError.create(
+            message: 'Error refreshing FCM token',
+            type: ErrorType.unknown,
+            stackTrace: stackTrace,
+            originalError: e,
+          );
         },
       );
-    } catch (e) {
-      _logger.e('Failed to get FCM token');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Failed to get FCM token',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
       rethrow;
     }
   }
@@ -187,9 +211,13 @@ class PushNotificationService {
 
       await _showLocalNotification(message);
       _blocDispatcher.handleNotification(message.data);
-    } catch (e) {
-      _logger.e('Error handling foreground message');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Error handling foreground message',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
     }
   }
 
@@ -222,9 +250,13 @@ class PushNotificationService {
         );
         _logger.i('Local notification shown successfully');
       }
-    } catch (e) {
-      _logger.e('Failed to show local notification');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Failed to show local notification',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
     }
   }
 
@@ -233,9 +265,13 @@ class PushNotificationService {
       _logger.i('Notification tapped: ${message.messageId}');
       _messageSubject.add(message);
       // Add your navigation logic here
-    } catch (e) {
-      _logger.e('Error handling notification tap');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Error handling notification tap',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
     }
   }
 
@@ -243,9 +279,13 @@ class PushNotificationService {
     try {
       _logger.i('Local notification tapped: ${response.payload}');
       // Add your local notification tap handling logic here
-    } catch (e) {
-      _logger.e('Error handling local notification tap');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Error handling local notification tap',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
     }
   }
 
@@ -258,9 +298,13 @@ class PushNotificationService {
     try {
       await _fcm.subscribeToTopic(topic);
       _logger.i('Subscribed to topic: $topic');
-    } catch (e) {
-      _logger.e('Failed to subscribe to topic: $topic');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Failed to subscribe to topic: $topic',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
       rethrow;
     }
   }
@@ -274,9 +318,13 @@ class PushNotificationService {
     try {
       await _fcm.unsubscribeFromTopic(topic);
       _logger.i('Unsubscribed from topic: $topic');
-    } catch (e) {
-      _logger.e('Failed to unsubscribe from topic: $topic');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Failed to unsubscribe from topic: $topic',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
       rethrow;
     }
   }
@@ -292,28 +340,35 @@ class PushNotificationService {
       _instance = null;
       _isInitialized = false;
       _logger.i('Push notification service disposed successfully');
-    } catch (e) {
-      _logger.e('Error disposing push notification service');
-      _logger.e(e);
+    } catch (e, stackTrace) {
+      AppError.create(
+        message: 'Error disposing push notification service',
+        type: ErrorType.unknown,
+        stackTrace: stackTrace,
+        originalError: e,
+      );
     }
   }
 }
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  final logger = Logger();
   try {
     // Initialize Firebase for background handler
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp();
+      logger.i('Firebase initialized successfully');
     }
 
-    final logger = Logger();
     logger.i('Handling background message: ${message.messageId}');
     // Add your background message handling logic here
   } catch (e, stackTrace) {
-    final logger = Logger();
-    logger.e('Error in background message handler');
-    logger.e(e);
-    logger.e(stackTrace);
+    AppError.create(
+      message: 'Error in background message handler',
+      type: ErrorType.unknown,
+      stackTrace: stackTrace,
+      originalError: e,
+    );
   }
 }

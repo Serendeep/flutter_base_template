@@ -3,6 +3,7 @@ import 'package:flutter_base_template/utils/config/app_config.dart';
 import 'package:flutter_base_template/utils/networking/url_provider.dart';
 import 'package:flutter_base_template/utils/shared_prefs.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -92,10 +93,12 @@ class ApiClient {
       },
       onError: (error, handler) {
         if (AppConfig.shouldShowLogs) {
-          _logger.e("Request failed");
-          _logger.e("Request URL: ${error.requestOptions.uri}");
-          _logger.e("Error message: ${error.message}");
-          _logger.e("Stack trace: ${error.stackTrace}");
+          AppError.create(
+            message: 'Request failed',
+            type: ErrorType.network,
+            originalError: error,
+            stackTrace: error.stackTrace,
+          );
         }
         handler.next(error);
       },
@@ -135,8 +138,19 @@ class ApiClient {
         await SharedPrefs().setString("accessToken", newAccessToken);
         return true;
       }
+    } on DioException catch (e) {
+      AppError.create(
+        message: 'Failed to refresh token',
+        type: ErrorType.authentication,
+        originalError: e,
+        stackTrace: e.stackTrace,
+      );
     } catch (e) {
-      _logger.e("Error refreshing token");
+      AppError.create(
+        message: 'Unexpected error during token refresh',
+        type: ErrorType.unknown,
+        originalError: e,
+      );
     }
     return false;
   }
@@ -151,12 +165,25 @@ class ApiClient {
       Future.delayed(
         const Duration(milliseconds: AppConfig.retryDelay),
         () => _dio.fetch(requestOptions).then(
-              (response) => handler.resolve(response),
-              onError: (e) => handler.reject(e),
-            ),
+          (response) => handler.resolve(response),
+          onError: (e) {
+            if (e is DioException) {
+              AppError.create(
+                message: 'Request retry failed',
+                type: ErrorType.network,
+                originalError: e,
+                stackTrace: e.stackTrace,
+              );
+            }
+            handler.reject(e);
+          },
+        ),
       );
     } else {
-      _logger.e("Max retries reached for ${requestOptions.uri}");
+      AppError.create(
+        message: 'Max retries reached for ${requestOptions.uri}',
+        type: ErrorType.network,
+      );
       handler.reject(
         DioException(
           requestOptions: requestOptions,
@@ -173,11 +200,20 @@ class ApiClient {
     Options? options,
     bool requiresAuth = true,
   }) async {
-    return _dio.get<T>(
-      endpoint,
-      queryParameters: queryParameters,
-      options: _mergeOptions(options, requiresAuth),
-    );
+    try {
+      return await _dio.get<T>(
+        endpoint,
+        queryParameters: queryParameters,
+        options: _mergeOptions(options, requiresAuth),
+      );
+    } on DioException catch (e) {
+      throw AppError.create(
+        message: 'GET request failed for $endpoint',
+        type: ErrorType.network,
+        originalError: e,
+        stackTrace: e.stackTrace,
+      );
+    }
   }
 
   Future<Response<T>> post<T>(
@@ -187,12 +223,21 @@ class ApiClient {
     Options? options,
     bool requiresAuth = true,
   }) async {
-    return _dio.post<T>(
-      endpoint,
-      data: data,
-      queryParameters: queryParameters,
-      options: _mergeOptions(options, requiresAuth),
-    );
+    try {
+      return await _dio.post<T>(
+        endpoint,
+        data: data,
+        queryParameters: queryParameters,
+        options: _mergeOptions(options, requiresAuth),
+      );
+    } on DioException catch (e) {
+      throw AppError.create(
+        message: 'POST request failed for $endpoint',
+        type: ErrorType.network,
+        originalError: e,
+        stackTrace: e.stackTrace,
+      );
+    }
   }
 
   Future<Response<T>> put<T>(
@@ -202,12 +247,21 @@ class ApiClient {
     Options? options,
     bool requiresAuth = true,
   }) async {
-    return _dio.put<T>(
-      endpoint,
-      data: data,
-      queryParameters: queryParameters,
-      options: _mergeOptions(options, requiresAuth),
-    );
+    try {
+      return await _dio.put<T>(
+        endpoint,
+        data: data,
+        queryParameters: queryParameters,
+        options: _mergeOptions(options, requiresAuth),
+      );
+    } on DioException catch (e) {
+      throw AppError.create(
+        message: 'PUT request failed for $endpoint',
+        type: ErrorType.network,
+        originalError: e,
+        stackTrace: e.stackTrace,
+      );
+    }
   }
 
   Future<Response<T>> delete<T>(
@@ -217,12 +271,21 @@ class ApiClient {
     Options? options,
     bool requiresAuth = true,
   }) async {
-    return _dio.delete<T>(
-      endpoint,
-      data: data,
-      queryParameters: queryParameters,
-      options: _mergeOptions(options, requiresAuth),
-    );
+    try {
+      return await _dio.delete<T>(
+        endpoint,
+        data: data,
+        queryParameters: queryParameters,
+        options: _mergeOptions(options, requiresAuth),
+      );
+    } on DioException catch (e) {
+      throw AppError.create(
+        message: 'DELETE request failed for $endpoint',
+        type: ErrorType.network,
+        originalError: e,
+        stackTrace: e.stackTrace,
+      );
+    }
   }
 
   Future<Response<T>> patch<T>(
@@ -232,12 +295,21 @@ class ApiClient {
     Options? options,
     bool requiresAuth = true,
   }) async {
-    return _dio.patch<T>(
-      endpoint,
-      data: data,
-      queryParameters: queryParameters,
-      options: _mergeOptions(options, requiresAuth),
-    );
+    try {
+      return await _dio.patch<T>(
+        endpoint,
+        data: data,
+        queryParameters: queryParameters,
+        options: _mergeOptions(options, requiresAuth),
+      );
+    } on DioException catch (e) {
+      throw AppError.create(
+        message: 'PATCH request failed for $endpoint',
+        type: ErrorType.network,
+        originalError: e,
+        stackTrace: e.stackTrace,
+      );
+    }
   }
 
   Options _mergeOptions(Options? options, bool requiresAuth) {

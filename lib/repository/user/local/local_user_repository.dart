@@ -1,4 +1,5 @@
 import 'package:flutter_base_template/core/base_repository.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 import 'package:flutter_base_template/models/user_model.dart';
 import 'package:flutter_base_template/repository/user/user_repository.dart';
 import 'package:sqflite/sqflite.dart';
@@ -62,6 +63,11 @@ class LocalUserRepository extends BaseRepository implements UserRepository {
 
   @override
   Future<void> syncUsers() async {
+    AppError.create(
+      message: 'Sync is not supported in local repository',
+      type: ErrorType.database,
+      shouldLog: true,
+    );
     throw UnimplementedError('Sync is not supported in local repository');
   }
 

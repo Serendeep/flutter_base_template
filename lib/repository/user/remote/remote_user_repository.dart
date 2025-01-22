@@ -2,6 +2,7 @@ import 'package:flutter_base_template/core/base_repository.dart';
 import 'package:flutter_base_template/models/user_model.dart';
 import 'package:flutter_base_template/repository/user/user_repository.dart';
 import 'package:flutter_base_template/repository/user/local/local_user_repository.dart';
+import 'package:flutter_base_template/utils/networking/url_provider.dart';
 
 class RemoteUserRepository extends BaseRepository implements UserRepository {
   final LocalUserRepository _localRepository;
@@ -19,7 +20,8 @@ class RemoteUserRepository extends BaseRepository implements UserRepository {
       () => _localRepository.getUser(id),
       () async {
         final response = await handleApiCall(
-          () => apiClient.get('/users/$id'),
+          () => apiClient.get(URLProvider()
+              .addPathSegments(URLProvider().userEndpoint, [id.toString()])),
         );
 
         if (response.data == null) return null;
@@ -37,7 +39,7 @@ class RemoteUserRepository extends BaseRepository implements UserRepository {
       () => _localRepository.getUsers(),
       () async {
         final response = await handleApiCall(
-          () => apiClient.get('/users'),
+          () => apiClient.get(URLProvider().userEndpoint),
         );
 
         final List<dynamic> data = response.data as List<dynamic>;
@@ -53,7 +55,7 @@ class RemoteUserRepository extends BaseRepository implements UserRepository {
   Future<void> saveUser(UserModel user) async {
     await handleApiCall(() async {
       await apiClient.post(
-        '/users',
+        URLProvider().userEndpoint,
         data: user.toJson(),
       );
 
@@ -66,7 +68,10 @@ class RemoteUserRepository extends BaseRepository implements UserRepository {
   @override
   Future<void> deleteUser(int id) async {
     await handleApiCall(() async {
-      await apiClient.delete('/users/$id');
+      await apiClient.delete(
+        URLProvider()
+            .addPathSegments(URLProvider().userEndpoint, [id.toString()]),
+      );
 
       await handleDatabaseOperation(
         () => _localRepository.deleteUser(id),
@@ -83,7 +88,7 @@ class RemoteUserRepository extends BaseRepository implements UserRepository {
 
         final response = await handleApiCall(
           () => apiClient.get(
-            '/users/sync',
+            URLProvider().userEndpoint,
             queryParameters: lastSyncTime != null
                 ? {'since': lastSyncTime.toIso8601String()}
                 : null,
@@ -100,9 +105,10 @@ class RemoteUserRepository extends BaseRepository implements UserRepository {
       onConflict: () async {
         // Handle sync conflicts here
         logger.w('Handling sync conflict');
+
         // For example, fetch all data and overwrite local
         final response = await handleApiCall(
-          () => apiClient.get('/users'),
+          () => apiClient.get(URLProvider().userEndpoint),
         );
         final List<dynamic> data = response.data as List<dynamic>;
         final users = data.map((json) => UserModel.fromJson(json)).toList();
@@ -112,7 +118,6 @@ class RemoteUserRepository extends BaseRepository implements UserRepository {
       },
       onComplete: () {
         logger.i('Sync completed successfully');
-        // Perform any additional actions after successful sync
         return Future.value();
       },
     );
@@ -125,7 +130,8 @@ class RemoteUserRepository extends BaseRepository implements UserRepository {
       () async {
         final response = await handleApiCall(
           () => apiClient.get(
-            '/users/search',
+            URLProvider()
+                .addPathSegments(URLProvider().userEndpoint, ['search']),
             queryParameters: {'q': query},
           ),
         );

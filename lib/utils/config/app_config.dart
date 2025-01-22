@@ -1,5 +1,6 @@
 import 'package:flutter_base_template/utils/config/flavor_config.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 
 class AppConfig {
   static final AppConfig _instance = AppConfig._internal();
@@ -29,9 +30,12 @@ class AppConfig {
       _logger.i('Base URL: $baseUrl');
       _logger.i('Logging enabled: $shouldShowLogs');
     } catch (e, stackTrace) {
-      _logger.e('Error initializing AppConfig');
-      _logger.e(e);
-      _logger.e(stackTrace);
+      AppError.create(
+        message: 'Error initializing AppConfig',
+        type: ErrorType.configuration,
+        originalError: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }

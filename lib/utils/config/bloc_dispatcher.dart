@@ -1,6 +1,7 @@
 import 'package:flutter_base_template/utils/config/flavor_config.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_base_template/core/error/app_error.dart';
 
 //Dispatcher to Dispatch Blocs Based on Status and Screen from a Notification
 
@@ -47,9 +48,12 @@ class BlocDispatcher extends BlocObserver {
   @override
   void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
     if (_enableLogging) {
-      _logger.e('onError -- ${bloc.runtimeType}');
-      _logger.e(error);
-      _logger.e(stackTrace);
+      AppError.create(
+        message: 'onError -- ${bloc.runtimeType}',
+        type: ErrorType.unknown,
+        originalError: error,
+        stackTrace: stackTrace,
+      );
     }
     super.onError(bloc, error, stackTrace);
   }
@@ -70,7 +74,11 @@ class BlocDispatcher extends BlocObserver {
       final Map<String, dynamic>? data = message['data'];
 
       if (type == null || action == null) {
-        _logger.w('Invalid notification format: missing type or action');
+        AppError.create(
+          message: 'Invalid notification format: missing type or action',
+          type: ErrorType.validation,
+          shouldLog: true,
+        );
         return;
       }
 
@@ -79,9 +87,12 @@ class BlocDispatcher extends BlocObserver {
 
       // Add your notification handling logic here
     } catch (e, stackTrace) {
-      _logger.e('Error handling notification');
-      _logger.e(e);
-      _logger.e(stackTrace);
+      AppError.create(
+        message: 'Error handling notification',
+        type: ErrorType.unknown,
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 }
