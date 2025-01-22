@@ -1,88 +1,115 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_base_template/utils/theme/theme.dart';
+import 'package:logger/logger.dart';
 import 'package:theme_provider/theme_provider.dart';
 
 class DebouncedButton extends StatefulWidget {
   final Widget textWidget;
-  final VoidCallback onPressed;
+  final AsyncCallback onPressed;
   final Duration duration;
-  final double width, height;
+  final double width;
+  final double height;
   final bool isWhite;
   final bool isCircle;
+  final Color? customColor;
+  final Color? customTextColor;
 
-  const DebouncedButton(
-      {super.key,
-      required this.textWidget,
-      required this.onPressed,
-      this.height = 50.0,
-      this.width = 160.0,
-      this.isWhite = false,
-      this.isCircle = false})
-      : duration = const Duration(milliseconds: 200);
+  const DebouncedButton({
+    super.key,
+    required this.textWidget,
+    required this.onPressed,
+    this.duration = const Duration(milliseconds: 200),
+    this.height = 50.0,
+    this.width = 160.0,
+    this.isWhite = false,
+    this.isCircle = false,
+    this.customColor,
+    this.customTextColor,
+  });
 
   @override
   State<DebouncedButton> createState() => _DebouncedButtonState();
 }
 
 class _DebouncedButtonState extends State<DebouncedButton> {
-  late ValueNotifier<bool> _isEnabled;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _isEnabled = ValueNotifier<bool>(true);
-  }
+  bool _isEnabled = true;
+  Timer? _debounceTimer;
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     super.dispose();
-    _timer?.cancel();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: _isEnabled,
-      builder: (context, isEnabled, child) => SizedBox(
-        height: widget.height, //MediaQuery.sizeOf(context).height * 0.056,
-        width: widget.width,
-        child: ElevatedButton(
-          style: _buttonStyle,
-          onPressed: isEnabled ? _onButtonPressed : null,
-          child: isEnabled
-              ? widget.textWidget
-              : const CircularProgressIndicator.adaptive(),
+  Future<void> _handleButtonPress() async {
+    if (!_isEnabled) return;
+
+    setState(() => _isEnabled = false);
+
+    try {
+      await widget.onPressed();
+    } catch (e) {
+      Logger().e('DebouncedButton error: $e');
+    } finally {
+      _debounceTimer = Timer(widget.duration, () {
+        if (mounted) {
+          setState(() => _isEnabled = true);
+        }
+      });
+    }
+  }
+
+  ButtonStyle _getButtonStyle(BuildContext context) {
+    final themeData = ThemeProvider.themeOf(context).data;
+    final themeColors = ThemeColor.get(context);
+
+    if (widget.isWhite) {
+      return ElevatedButton.styleFrom(
+        backgroundColor: widget.customColor ?? Colors.white,
+        foregroundColor: widget.customTextColor ?? themeColors.buttonBackground,
+        textStyle: themeData.textTheme.labelLarge?.copyWith(
+          color: widget.customTextColor ?? themeColors.buttonBackground,
+          fontWeight: FontWeight.bold,
         ),
+        shape: widget.isCircle
+            ? CircleBorder(
+                side: BorderSide(color: themeColors.textfieldBorderColor),
+              )
+            : RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0),
+                side: BorderSide(color: themeColors.textfieldBorderColor),
+              ),
+      );
+    }
+
+    return ElevatedButton.styleFrom(
+      backgroundColor: widget.customColor ?? themeData.colorScheme.primary,
+      foregroundColor: widget.customTextColor ?? themeColors.background,
+      textStyle: themeData.textTheme.labelLarge?.copyWith(
+        color: widget.customTextColor ?? themeColors.background,
+        fontWeight: FontWeight.bold,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
       ),
     );
   }
 
-  ButtonStyle get _buttonStyle => widget.isWhite
-      ? ButtonStyle(
-          textStyle: WidgetStateProperty.all<TextStyle>(
-              ThemeProvider.themeOf(context)
-                  .data
-                  .textTheme
-                  .labelLarge!
-                  .copyWith(
-                      color: ThemeColor.get(context).buttonBackground,
-                      fontWeight: FontWeight.bold)),
-          surfaceTintColor: WidgetStateProperty.all<Color>(Colors.white),
-          shape: widget.isCircle
-              ? WidgetStateProperty.all<CircleBorder>(CircleBorder(
-                  side: BorderSide(
-                      color: ThemeColor.get(context).textfieldBorderColor)))
-              : WidgetStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0), side: BorderSide(color: ThemeColor.get(context).textfieldBorderColor))),
-          backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
-          foregroundColor: WidgetStateProperty.all<Color>(Colors.white))
-      : ButtonStyle(textStyle: WidgetStateProperty.all<TextStyle>(ThemeProvider.themeOf(context).data.textTheme.labelLarge!.copyWith(color: ThemeColor.get(context).background, fontWeight: FontWeight.bold)), shape: WidgetStateProperty.all<RoundedRectangleBorder>(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))), backgroundColor: WidgetStateProperty.all<Color>(ThemeProvider.themeOf(context).data.colorScheme.primary));
-
-  void _onButtonPressed() {
-    _isEnabled.value = false;
-    widget.onPressed();
-    _timer = Timer(widget.duration, () => _isEnabled.value = true);
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: widget.height,
+      width: widget.width,
+      child: ElevatedButton(
+        style: _getButtonStyle(context),
+        onPressed: _isEnabled ? _handleButtonPress : null,
+        child: _isEnabled
+            ? widget.textWidget
+            : const CircularProgressIndicator.adaptive(),
+      ),
+    );
   }
 }
+
+typedef AsyncCallback = Future<void> Function();

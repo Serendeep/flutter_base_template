@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:theme_provider/theme_provider.dart';
 
 import 'light_theme.dart';
+import 'dark_theme.dart';
 import 'styles/base_color_styles.dart';
 import 'styles/light_theme_colors.dart';
+import 'styles/dark_theme_colors.dart';
 
-// This theme fucntion has been deprecated and is not being used.
+// This theme function has been deprecated and is not being used.
 // Please use the appThemes variable below instead.
 ThemeData appTheme() {
   return ThemeData(
@@ -32,8 +34,8 @@ final List<BaseThemeConfig<BaseColorStyles>> appThemes = [
   BaseThemeConfig<BaseColorStyles>(
     id: 'darkthemeid',
     description: "Dark theme",
-    theme: lightTheme,
-    colors: LightThemeColors(),
+    theme: darkTheme,
+    colors: DarkThemeColors(),
   ),
 ];
 

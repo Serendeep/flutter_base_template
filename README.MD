@@ -179,6 +179,10 @@ Each environment has its own distinctive app icon:
 - [ ] Add offline support
 - [ ] Implement automated testing workflows
 
+## Credits
+
+This project uses themes and design inspiration from [Nylo](https://github.com/nylo-core/nylo), an open-source Flutter framework. Special thanks to the Nylo team for their excellent theming and design resources.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
