@@ -12,11 +12,6 @@ on:
           - development
           - staging
           - production
-      env_file:
-        description: 'Environment File'
-        required: false
-        default: '.env'
-        type: string
 
 jobs:
   build-and-release:
@@ -24,16 +19,28 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - name: Upload Environment File
+        uses: actions/upload-artifact@v3
+        with:
+          name: env-file
+          path: .env.${{ inputs.flavor }}
+          retention-days: 1
+      
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.16.0'
           channel: 'stable'
       
+      - name: Download Environment File
+        uses: actions/download-artifact@v3
+        with:
+          name: env-file
+      
       - name: Prepare Environment
         run: |
           chmod +x ./scripts/setup-env.sh
-          ./scripts/setup-env.sh -f ${{ inputs.flavor }} -e ${{ inputs.env_file }}
+          ./scripts/setup-env.sh -f ${{ inputs.flavor }} -e .env.${{ inputs.flavor }}
       
       - name: Install dependencies
         run: flutter pub get
