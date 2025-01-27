@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_base_template/services/db/database_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_base_template/modules/home/bloc/home_bloc.dart';
 import 'package:flutter_base_template/services/push_notification_service.dart';
@@ -21,6 +22,7 @@ Future<void> mainCommon() async {
 
   await Future.wait([
     SharedPrefs().init(),
+    DatabaseService.instance.initHive(),
     AppConfig().init(),
   ]);
 

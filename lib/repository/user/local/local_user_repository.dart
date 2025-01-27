@@ -2,10 +2,10 @@ import 'package:flutter_base_template/core/base_repository.dart';
 import 'package:flutter_base_template/core/error/app_error.dart';
 import 'package:flutter_base_template/models/user_model.dart';
 import 'package:flutter_base_template/repository/user/user_repository.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 
 class LocalUserRepository extends BaseRepository implements UserRepository {
-  static const String _tableName = 'users';
+  static const String _userBoxName = 'users';
 
   LocalUserRepository({
     super.databaseService,
@@ -15,49 +15,33 @@ class LocalUserRepository extends BaseRepository implements UserRepository {
   @override
   Future<UserModel?> getUser(int id) async {
     return handleDatabaseOperation(() async {
-      final db = await databaseService.database;
-      final List<Map<String, dynamic>> results = await db.query(
-        _tableName,
-        where: 'id = ?',
-        whereArgs: [id],
-        limit: 1,
-      );
-
-      if (results.isEmpty) return null;
-      return UserModel.fromDb(results.first);
+      final box = await Hive.openBox(_userBoxName);
+      final userMap = box.get(id.toString());
+      return userMap != null ? UserModel.fromDb(userMap) : null;
     });
   }
 
   @override
   Future<List<UserModel>> getUsers() async {
     return handleDatabaseOperation(() async {
-      final db = await databaseService.database;
-      final List<Map<String, dynamic>> results = await db.query(_tableName);
-      return results.map((data) => UserModel.fromDb(data)).toList();
+      final box = await Hive.openBox(_userBoxName);
+      return box.values.map((data) => UserModel.fromDb(data)).toList();
     });
   }
 
   @override
   Future<void> saveUser(UserModel user) async {
     await handleDatabaseOperation(() async {
-      final db = await databaseService.database;
-      await db.insert(
-        _tableName,
-        user.toDb(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      final box = await Hive.openBox(_userBoxName);
+      await box.put(user.id.toString(), user.toDb());
     });
   }
 
   @override
   Future<void> deleteUser(int id) async {
     await handleDatabaseOperation(() async {
-      final db = await databaseService.database;
-      await db.delete(
-        _tableName,
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      final box = await Hive.openBox(_userBoxName);
+      await box.delete(id.toString());
     });
   }
 
@@ -74,37 +58,29 @@ class LocalUserRepository extends BaseRepository implements UserRepository {
   @override
   Future<List<UserModel>> searchUsers(String query) async {
     return handleDatabaseOperation(() async {
-      final db = await databaseService.database;
-      final List<Map<String, dynamic>> results = await db.query(
-        _tableName,
-        where: 'name LIKE ? OR email LIKE ?',
-        whereArgs: ['%$query%', '%$query%'],
-      );
-      return results.map((data) => UserModel.fromDb(data)).toList();
+      final box = await Hive.openBox(_userBoxName);
+      return box.values
+          .map((data) => UserModel.fromDb(data))
+          .where((user) =>
+              user.name.toLowerCase().contains(query.toLowerCase()) ||
+              user.email.toLowerCase().contains(query.toLowerCase()))
+          .toList();
     });
   }
 
   Future<void> saveUsers(List<UserModel> users) async {
     await handleDatabaseOperation(() async {
-      final db = await databaseService.database;
-      final batch = db.batch();
+      final box = await Hive.openBox(_userBoxName);
       for (var user in users) {
-        batch.insert(
-          _tableName,
-          user.toDb(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await box.put(user.id.toString(), user.toDb());
       }
-      await batch.commit(noResult: true);
     });
   }
 
   Future<int> getUserCount() async {
     return handleDatabaseOperation(() async {
-      final db = await databaseService.database;
-      final results =
-          await db.rawQuery('SELECT COUNT(*) as count FROM $_tableName');
-      return Sqflite.firstIntValue(results) ?? 0;
+      final box = await Hive.openBox(_userBoxName);
+      return box.length;
     });
   }
 }

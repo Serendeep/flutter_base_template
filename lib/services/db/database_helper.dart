@@ -1,18 +1,17 @@
+import 'package:hive_ce/hive.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:flutter_base_template/services/db/database_service.dart';
-import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
-  Database? _database;
   final DatabaseService _appDB = DatabaseService.instance;
 
   DatabaseHelper._internal();
 
   factory DatabaseHelper() => _instance;
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _appDB.database;
-    return _database!;
+  Future<Box> get database async {
+    await _appDB.initHive(); // Ensure Hive is initialized
+    return _appDB.userBox;
   }
 }
