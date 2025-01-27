@@ -129,6 +129,7 @@ generate_app_icons() {
     if ! command -v magick &> /dev/null; then
         print_error "ImageMagick is not installed. Please install it first."
         print_error "On Ubuntu/Debian: sudo apt-get install imagemagick"
+        print_error "On Arch Linux: sudo pacman -S imagemagick"
         print_error "On macOS: brew install imagemagick"
         return 1
     fi
