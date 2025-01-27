@@ -1,6 +1,7 @@
 import 'package:flutter_base_template/utils/config/flavor_config.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_base_template/core/error/app_error.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppConfig {
   static final AppConfig _instance = AppConfig._internal();
@@ -29,6 +30,20 @@ class AppConfig {
           'AppConfig initialized with flavor: ${FlavorConfig.instance.flavor}');
       _logger.i('Base URL: $baseUrl');
       _logger.i('Logging enabled: $shouldShowLogs');
+      try {
+        await Supabase.initialize(
+          url: FlavorConfig.instance.values.apiKeys['supabase_url'] ?? '',
+          anonKey:
+              FlavorConfig.instance.values.apiKeys['supabase_anonKey'] ?? '',
+        );
+      } catch (e, stackTrace) {
+        AppError.create(
+          message: 'Error initializing Supabase',
+          type: ErrorType.configuration,
+          originalError: e,
+          stackTrace: stackTrace,
+        );
+      }
     } catch (e, stackTrace) {
       AppError.create(
         message: 'Error initializing AppConfig',

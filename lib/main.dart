@@ -1,16 +1,13 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_base_template/services/db/database_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_base_template/modules/home/bloc/home_bloc.dart';
-import 'package:flutter_base_template/services/push_notification_service.dart';
 import 'package:flutter_base_template/utils/config/bloc_dispatcher.dart';
 import 'package:flutter_base_template/utils/config/app_config.dart';
 import 'package:flutter_base_template/utils/shared_prefs.dart';
 import 'package:flutter_base_template/utils/theme/theme.dart';
 import 'package:flutter_base_template/routes/app_router.dart';
 import 'package:flutter_base_template/utils/config/flavor_banner.dart';
-import 'package:logger/logger.dart';
 import 'package:theme_provider/theme_provider.dart';
 
 Future<void> mainCommon() async {
@@ -26,19 +23,20 @@ Future<void> mainCommon() async {
     AppConfig().init(),
   ]);
 
+  // TODO: Implement Push Notification Service
   // Initialize push notifications if enabled
-  if (AppConfig.enablePushNotifications) {
-    try {
-      final pushService =
-          PushNotificationService.initialize(blocDispatcher: blocDispatcher);
-      await pushService.init();
-    } on FirebaseException catch (e) {
-      Logger().e(
-          'Firebase Push Notification Initialization Error: ${e.code} - ${e.message}');
-    } catch (e) {
-      Logger().e('Unexpected error initializing push notifications: $e');
-    }
-  }
+  // if (AppConfig.enablePushNotifications) {
+  //   try {
+  //     final pushService =
+  //         PushNotificationService.initialize(blocDispatcher: blocDispatcher);
+  //     await pushService.init();
+  //   } on Exception catch (e) {
+  //     Logger().e(
+  //         'Supabase Push Notification Initialization Error: ${e.toString()}');
+  //   } catch (e) {
+  //     Logger().e('Unexpected error initializing push notifications: $e');
+  //   }
+  // }
 
   runApp(const MyApp());
 }

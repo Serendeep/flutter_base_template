@@ -17,14 +17,21 @@ class FlavorValues {
     String? appTitle,
     bool? enableLogging,
     Map<String, String>? apiKeys,
-  }) : baseUrl = baseUrl ?? Platform.environment['API_BASE_URL'] ?? 'https://api.example.com',
-       appTitle = appTitle ?? Platform.environment['APP_TITLE'] ?? 'App',
-       enableLogging = enableLogging ?? Platform.environment['ENABLE_LOGGING']?.toLowerCase() == 'true',
-       apiKeys = apiKeys ?? {
-          'analytics': Platform.environment['ANALYTICS_KEY'] ?? '',
-          'maps': Platform.environment['MAPS_KEY'] ?? '',
-          // Add other API keys as needed
-        };
+  })  : baseUrl = baseUrl ??
+            Platform.environment['API_BASE_URL'] ??
+            'https://api.example.com',
+        appTitle = appTitle ?? Platform.environment['APP_TITLE'] ?? 'App',
+        enableLogging = enableLogging ??
+            Platform.environment['ENABLE_LOGGING']?.toLowerCase() == 'true',
+        apiKeys = apiKeys ??
+            {
+              'analytics': Platform.environment['ANALYTICS_KEY'] ?? '',
+              'maps': Platform.environment['MAPS_KEY'] ?? '',
+              'supabase_url': Platform.environment['SUPABASE_URL'] ?? '',
+              'supabase_anonKey':
+                  Platform.environment['SUPABASE_ANON_KEY'] ?? '',
+              // Add other API keys as needed
+            };
 
   factory FlavorValues.development() => FlavorValues(
         baseUrl: Platform.environment['DEV_API_BASE_URL'],
