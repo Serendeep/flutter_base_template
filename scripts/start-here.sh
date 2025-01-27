@@ -27,7 +27,7 @@ if [ $# -eq 0 ]; then
 fi
 
 NEW_PROJECT_NAME=$1
-OLD_PROJECT_NAME="klackr_mobile"
+OLD_PROJECT_NAME="flutter_base_template"
 NEW_PACKAGE_NAME=$(echo $NEW_PROJECT_NAME | sed 's/_//')
 CURRENT_DIR=$(pwd)
 
