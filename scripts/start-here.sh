@@ -6,6 +6,10 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Get the script directory (resolves absolute path)
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+BASE_DIR=$(realpath "$SCRIPT_DIR/..")
+
 # Function to print colored output
 print_status() {
     echo -e "${BLUE}[*]${NC} $1"
@@ -29,7 +33,6 @@ fi
 NEW_PROJECT_NAME=$1
 OLD_PROJECT_NAME="flutter_base_template"
 NEW_PACKAGE_NAME=$(echo $NEW_PROJECT_NAME | sed 's/_//')
-CURRENT_DIR=$(pwd)
 
 print_status "Starting project generation for: $NEW_PROJECT_NAME"
 
@@ -54,72 +57,46 @@ replace_in_file() {
 # Replace project name in key files
 print_status "Updating project files..."
 
-# Update pubspec.yaml
-replace_in_file $OLD_PROJECT_NAME $NEW_PROJECT_NAME "pubspec.yaml"
+replace_in_file $OLD_PROJECT_NAME $NEW_PROJECT_NAME "$BASE_DIR/pubspec.yaml"
 print_success "Updated pubspec.yaml"
 
 # Update .iml file if it exists
-if [ -f "$OLD_PROJECT_NAME.iml" ]; then
-    mv "$OLD_PROJECT_NAME.iml" "$NEW_PROJECT_NAME.iml"
-    replace_in_file $OLD_PROJECT_NAME $NEW_PROJECT_NAME "$NEW_PROJECT_NAME.iml"
+if [ -f "$BASE_DIR/$OLD_PROJECT_NAME.iml" ]; then
+    mv "$BASE_DIR/$OLD_PROJECT_NAME.iml" "$BASE_DIR/$NEW_PROJECT_NAME.iml"
+    replace_in_file $OLD_PROJECT_NAME $NEW_PROJECT_NAME "$BASE_DIR/$NEW_PROJECT_NAME.iml"
     print_success "Updated .iml file"
 fi
 
-# Update package imports in Dart files
+# Update Dart imports
 print_status "Updating Dart imports..."
-find lib test -type f -name "*.dart" -exec sed -i "s/package:$OLD_PROJECT_NAME/package:$NEW_PROJECT_NAME/g" {} +
+find "$BASE_DIR/lib" "$BASE_DIR/test" -type f -name "*.dart" -exec sed -i "s/package:$OLD_PROJECT_NAME/package:$NEW_PROJECT_NAME/g" {} +
 print_success "Updated Dart imports"
 
 # Update Android files
 print_status "Updating Android configuration..."
-# Update namespace and applicationId
-replace_in_file "namespace = \"$OLD_PACKAGE_NAME.$OLD_PROJECT_NAME\"" "namespace = \"$NEW_PACKAGE_NAME.$NEW_PROJECT_NAME\"" "android/app/build.gradle"
-replace_in_file "applicationId = \"$OLD_PACKAGE_NAME.$OLD_PROJECT_NAME\"" "applicationId = \"$NEW_PACKAGE_NAME.$NEW_PROJECT_NAME\"" "android/app/build.gradle"
+replace_in_file "namespace = \"$OLD_PACKAGE_NAME.$OLD_PROJECT_NAME\"" "namespace = \"$NEW_PACKAGE_NAME.$NEW_PROJECT_NAME\"" "$BASE_DIR/android/app/build.gradle"
+replace_in_file "applicationId = \"$OLD_PACKAGE_NAME.$OLD_PROJECT_NAME\"" "applicationId = \"$NEW_PACKAGE_NAME.$NEW_PROJECT_NAME\"" "$BASE_DIR/android/app/build.gradle"
+print_success "Updated Android configuration"
 
-# Update Kotlin package name
-if [ -d "android/app/src/main/kotlin" ]; then
-    OLD_KOTLIN_PATH="android/app/src/main/kotlin/$OLD_PACKAGE_NAME/$OLD_PROJECT_NAME"
-    NEW_KOTLIN_PATH="android/app/src/main/kotlin/$NEW_PACKAGE_NAME/$NEW_PROJECT_NAME"
-    mkdir -p "$(dirname $NEW_KOTLIN_PATH)"
-    if [ -d "$OLD_KOTLIN_PATH" ]; then
-        mv "$OLD_KOTLIN_PATH"/* "$(dirname $NEW_KOTLIN_PATH)/"
-        rm -rf "android/app/src/main/kotlin/$OLD_PACKAGE_NAME"
-    fi
-    # Update package name in Kotlin files
-    find "android/app/src/main/kotlin" -name "*.kt" -exec sed -i "s/package $OLD_PACKAGE_NAME.$OLD_PROJECT_NAME/package $NEW_PACKAGE_NAME.$NEW_PROJECT_NAME/g" {} +
-fi
-print_success "Updated Android files"
-
-# Update MacOS files
+# Update macOS files
 print_status "Updating macOS configuration..."
-rm -rf macos
-flutter create . --platforms=macos
+rm -rf "$BASE_DIR/macos"
+flutter create "$BASE_DIR" --platforms=macos
 print_success "Updated macOS configuration"
 
 # Update iOS files
 print_status "Updating iOS configuration..."
-rm -rf ios
-flutter create . --platforms=ios
+rm -rf "$BASE_DIR/ios"
+flutter create "$BASE_DIR" --platforms=ios
 print_success "Updated iOS configuration"
 
-# Update Linux files
-print_status "Updating Linux configuration..."
-rm -rf linux
-flutter create . --platforms=linux
-print_success "Updated Linux configuration"
-
-# Update Windows files
-print_status "Updating Windows configuration..."
-rm -rf windows
-flutter create . --platforms=windows
-print_success "Updated Windows configuration"
-
-# Update web files
-print_status "Updating web configuration..."
-rm -rf web
-flutter create . --platforms=web
-print_success "Updated web configuration"
-
+# Update other platforms (Linux, Windows, Web)
+for platform in linux windows web; do
+    print_status "Updating $platform configuration..."
+    rm -rf "$BASE_DIR/$platform"
+    flutter create "$BASE_DIR" --platforms=$platform
+    print_success "Updated $platform configuration"
+done
 
 # Function to generate app icons
 generate_app_icons() {
@@ -128,42 +105,37 @@ generate_app_icons() {
     # Check if ImageMagick is installed
     if ! command -v magick &> /dev/null; then
         print_error "ImageMagick is not installed. Please install it first."
-        print_error "On Ubuntu/Debian: sudo apt-get install imagemagick"
-        print_error "On Arch Linux: sudo pacman -S imagemagick"
-        print_error "On macOS: brew install imagemagick"
         return 1
     fi
     
-    # Make the generate_icons.sh script executable
-    chmod +x generate_icons.sh
-    
-    # Run the icon generation script
-    ./generate_icons.sh
-    
-    if [ $? -eq 0 ]; then
-        print_success "App icons generated successfully for all environments"
+    # Ensure generate_icons.sh exists
+    if [ -f "$SCRIPT_DIR/generate_icons.sh" ]; then
+        chmod +x "$SCRIPT_DIR/generate_icons.sh"
+        "$SCRIPT_DIR/generate_icons.sh"
+        if [ $? -eq 0 ]; then
+            print_success "App icons generated successfully"
+        else
+            print_error "Failed to generate app icons"
+        fi
     else
-        print_error "Failed to generate app icons"
-        return 1
+        print_error "generate_icons.sh not found in $SCRIPT_DIR"
     fi
 }
 
 # Clean up
 print_status "Cleaning up project..."
-
-# Remove build directories and generated files
-rm -rf build/
-rm -rf .dart_tool/
-rm -rf .idea/
-rm -f .flutter-plugins
-rm -f .flutter-plugins-dependencies
-rm -f README.md
-print_success "Removed generated directories and files"
+rm -rf "$BASE_DIR/build/"
+rm -rf "$BASE_DIR/.dart_tool/"
+rm -rf "$BASE_DIR/.idea/"
+rm -f "$BASE_DIR/.flutter-plugins"
+rm -f "$BASE_DIR/.flutter-plugins-dependencies"
+rm -f "$BASE_DIR/README.md"
+print_success "Removed unnecessary files"
 
 # Initialize fresh git repository
 print_status "Initializing fresh git repository..."
-rm -rf .git
-git init
+rm -rf "$BASE_DIR/.git"
+git -C "$BASE_DIR" init
 print_success "Initialized new git repository"
 
 # Run flutter clean and pub get
@@ -173,10 +145,14 @@ flutter clean
 print_status "Getting dependencies..."
 flutter pub get
 
-# Make run script executable
-chmod +x run.sh
+# Ensure run.sh is executable
+if [ -f "$SCRIPT_DIR/run.sh" ]; then
+    chmod +x "$SCRIPT_DIR/run.sh"
+else
+    print_error "run.sh not found in $SCRIPT_DIR"
+fi
 
-# Add icon generation to the main workflow
+# Run icon generation
 generate_app_icons
 
 print_success "Project generation complete!"
